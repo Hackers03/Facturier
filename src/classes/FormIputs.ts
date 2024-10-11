@@ -1,103 +1,102 @@
-import { HasHtmlFormat } from "../interfaces/HasHtmlFormats.js";
-import { HasPrint } from "../interfaces/HasPrint.js";
-import { HasRender } from "../interfaces/HasRender.js";
-import { Datas } from "./Datas.js";
-import { Display } from "./Display.js";
-import { Print } from "./Print.js";
+import { Datas } from './Datas.js'; // Assure-toi que le chemin est correct
+import { Display } from './Display.js';
+import { Print } from './Print.js';
+
 export class FormInput {
-    form : HTMLFormElement; 
-    type : HTMLSelectElement;
-    firstName : HTMLInputElement;
-    lastName : HTMLInputElement;
-    address : HTMLInputElement;
-    country : HTMLInputElement;
-    town : HTMLInputElement;
-    zip : HTMLInputElement;
-    product : HTMLInputElement;
-    price : HTMLInputElement;
-    quantity : HTMLInputElement;
-    tva : HTMLInputElement;
-    docContainer:HTMLDivElement;
-    hiddenDiv:HTMLDivElement;
-    btnPrint:HTMLButtonElement
-    btnReload:HTMLButtonElement
-        constructor(){
+    private form: HTMLFormElement;
+    private container: HTMLDivElement;
+    private hiddenDiv: HTMLDivElement;
+    private btnPrint: HTMLButtonElement;
+    private productsContainer: HTMLDivElement;
+    
+    constructor() {
         this.form = document.getElementById('form') as HTMLFormElement;
-        this.type = document.getElementById('type') as HTMLSelectElement;
-        this.firstName = document.getElementById('firstName') as HTMLInputElement;
-        this.lastName = document.getElementById('lastName') as HTMLInputElement;
-        this.address = document.getElementById('address') as HTMLInputElement;
-        this.country = document.getElementById('country') as HTMLInputElement;
-        this.town = document.getElementById('town') as HTMLInputElement;
-        this.zip = document.getElementById('zip') as HTMLInputElement;
-        this.product = document.getElementById('product') as HTMLInputElement;
-        this.price = document.getElementById('price') as HTMLInputElement;
-        this.quantity = document.getElementById('quantity') as HTMLInputElement;
-        this.tva = document.getElementById('tva') as HTMLInputElement;
-        this.submitFormListener();
-        this.docContainer = document.getElementById('document-container') as HTMLDivElement;
+        this.container = document.getElementById('document-container') as HTMLDivElement;
         this.hiddenDiv = document.getElementById('hiddenDiv') as HTMLDivElement;
         this.btnPrint = document.getElementById('print') as HTMLButtonElement;
-        this.btnReload = document.getElementById('reload') as HTMLButtonElement;
-        this.printListener(this.btnPrint,this.docContainer);
-        this.deleteListener( this.btnReload)
-    }
-    private submitFormListener():void {
-        this.form.addEventListener('submit', this.handleSubmit.bind(this));
-    }
-    private printListener(btn:HTMLButtonElement,docContainer:HTMLDivElement){
-        btn.addEventListener('click', () =>
-        {
-            let availableDoc:HasPrint
-            availableDoc = new Print(docContainer);
-            availableDoc.print();
-        });
-    }
-    private deleteListener(btn:HTMLButtonElement){
-        btn.addEventListener('click', () =>
-        {
-            document.location.reload();
-            window.scrollTo(0,0);
-        });
-    }
-    private handleSubmit( e: Event) {
-        e.preventDefault();
-        const inputs = this.inputDatas();
-        if(inputs) {
-            const [type, firstName, lastName, address, country, town, zip, product, price, quantity, tva] = inputs;
-            console.log(type, firstName, lastName, address, country, town, zip, product, price, quantity, tva);
-            let docData:HasHtmlFormat;
-            let date: Date = new Date();
-            docData = new Datas(type, firstName, lastName, address, country, town, zip, product, price, quantity, tva ,date  )
-            let template:HasRender;
-            template = new Display(this.docContainer,this.hiddenDiv,this.btnPrint);
-            template.render(docData, type);
-        }
+        this.productsContainer = document.getElementById('products-container') as HTMLDivElement;
 
+        this.form.addEventListener('submit', (event) => this.handleSubmit(event));
+        document.getElementById('add-product')!.addEventListener('click', () => this.addProductRow());
+        this.productsContainer.addEventListener('click', (event) => this.removeProductRow(event));
     }
-    private inputDatas(): [string,string,string,string,string,string,number,string,number,number,number] | void {
-        const type = this.type.value;
-        const firstName = this.firstName.value;
-        const lastName = this.lastName.value;
-        const address = this.address.value;
-        const country = this.country.value;
-        const town = this.town.value;
-        const zip = parseInt(this.zip.value);
-        const product = this.product.value;
-        const price = parseFloat(this.price.value);
-        const quantity = parseInt(this.quantity.value);
-        const tva = parseFloat(this.tva.value);
-        if (zip > 0 && price > 0 && quantity > 0 && tva > 0){
-            return [type, firstName, lastName, address, country, town, zip, product, price, quantity, tva];
-        }else {
-            alert("les valeur numerique doivent etre superieur a Zero");
-            return;
+
+    private addProductRow(): void {
+        const productRow = document.createElement('div');
+        productRow.className = 'row product-row';
+        productRow.innerHTML = `
+            <div class="col-md-6 mb-3">
+                <label for="product">Nom du produit/service</label>
+                <input type="text" class="form-control" name="product" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="price">Prix</label>
+                <input type="number" class="form-control" name="price" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="quantity">Quantité</label>
+                <input type="number" class="form-control" name="quantity" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="tva">TVA</label>
+                <input type="number" class="form-control" name="tva" required>
+            </div>
+            <div class="col-md-1 mb-3">
+                <button type="button" class="btn btn-danger remove-product">-</button>
+            </div>
+        `;
+        this.productsContainer.appendChild(productRow);
+    }
+
+    private removeProductRow(event: Event): void {
+        const target = event.target as HTMLElement;
+        if (target.classList.contains('remove-product')) {
+            const productRow = target.closest('.product-row');
+            if (productRow) {
+                productRow.remove();
+            }
         }
+    }
+
+    private handleSubmit(event: Event): void {
+        event.preventDefault(); // Empêche le rechargement de la page
+
+        // Récupère les valeurs du formulaire
+        const documentType = (document.getElementById('type') as HTMLSelectElement).value;
+        const firstName = (document.getElementById('firstName') as HTMLInputElement).value;
+        const lastName = (document.getElementById('lastName') as HTMLInputElement).value;
+        const address = (document.getElementById('address') as HTMLInputElement).value;
+        const country = (document.getElementById('country') as HTMLInputElement).value;
+        const town = (document.getElementById('town') as HTMLInputElement).value;
+        const zip = parseInt((document.getElementById('zip') as HTMLInputElement).value);
+
+        // Récupère les informations des produits
+        const productInputs = this.getProductInputs();
+
+        // Crée une instance de Datas
+        const datas = new Datas(documentType, firstName, lastName, address, country, town, zip, productInputs);
+
+        // Affiche le document
+        const display = new Display(this.container, this.hiddenDiv, this.btnPrint);
+        display.render(datas, documentType);
+        
+        // Crée une instance de Print
+        const printInstance = new Print(this.container);
+        this.btnPrint.addEventListener('click', () => printInstance.print());
+    }
+
+    private getProductInputs(): { product: string, price: number, quantity: number, tva: number }[] {
+        const productRows = this.productsContainer.querySelectorAll('.product-row');
+        const products: { product: string, price: number, quantity: number, tva: number }[] = [];
+
+        productRows.forEach(row => {
+            const product = (row.querySelector('input[name="product"]') as HTMLInputElement).value;
+            const price = parseFloat((row.querySelector('input[name="price"]') as HTMLInputElement).value);
+            const quantity = parseInt((row.querySelector('input[name="quantity"]') as HTMLInputElement).value);
+            const tva = parseFloat((row.querySelector('input[name="tva"]') as HTMLInputElement).value);
+            products.push({ product, price, quantity, tva });
+        });
+
+        return products;
     }
 }
-
-
-
-
-// submit Form
-

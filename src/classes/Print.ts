@@ -1,11 +1,12 @@
-import { HasPrint } from "../interfaces/HasPrint.js";
-export class Print implements HasPrint {
-    constructor(private el:HTMLDivElement){
+// Print.ts
+export class Print {
+    constructor(private el: HTMLDivElement) {}
 
-    }
     print(): void {
+        const originalBody = document.body.innerHTML;
         document.body.innerHTML = this.el.innerHTML;
         window.print();
-        document.location.reload();
+        document.body.innerHTML = originalBody;
+        window.location.reload();
     }
 }
